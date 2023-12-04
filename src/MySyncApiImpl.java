@@ -26,17 +26,16 @@ public class MySyncApiImpl {
                 future.join();
                 if (future.isDone()) {
                     return future.get();
-                } else if (future.isCompletedExceptionally()) {
-                    throw future.exceptionNow();
                 } else {
                     throw new IllegalStateException();
                 }
             } catch (CancellationException e) {
                 cancellable.cancel();
                 throw e;
-            } catch (MyApiException e) {
-                throw e;
             } catch (Throwable e) {
+                if (e.getCause() != null && e.getCause() instanceof MyApiException) {
+                    throw (MyApiException) e.getCause();
+                }
                 throw new RuntimeException(e);
             } finally {
                 future = null;
@@ -52,8 +51,8 @@ public class MySyncApiImpl {
      * Cancel most recent operation started with 'operation' method.
      * Return true of operation was cancelled and false otherwise.
      */
-    public boolean cancelOperation() {
-        if (future != null) {
+    public synchronized boolean cancelOperation() {
+        if (future != null && !future.isDone()) {
             future.cancel(true);
             return true;
         }
