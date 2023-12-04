@@ -38,7 +38,6 @@ public class MySyncApiImpl {
                 }
                 throw new RuntimeException(e);
             } finally {
-                future = null;
                 semaphore.release();
             }
 
